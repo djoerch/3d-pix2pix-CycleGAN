@@ -16,6 +16,9 @@ def CreateDataset(opt):
     elif opt.dataset_mode == 'nodule':
         from data.nodule_dataset import NoduleDataset
         dataset = NoduleDataset()
+    elif opt.dataset_mode == 'nifti':
+        from data.nifti_dataset import NiftiDataset
+        dataset = NiftiDataset()
     else:
         raise ValueError("Dataset [%s] not recognized." % opt.dataset_mode)
 

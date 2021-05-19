@@ -6,6 +6,7 @@ import inspect, re
 import numpy as np
 import os
 import collections
+import nibabel as nib
 
 # Converts a Tensor into a Numpy array
 # |imtype|: the desired type of the converted numpy array
@@ -32,9 +33,14 @@ def diagnose_network(net, name='network'):
     print(mean)
 
 
-def save_image(image_numpy, image_path):
-    image_pil = Image.fromarray(image_numpy)
-    image_pil.save(image_path)
+def save_image(image_numpy, image_path, orig_affine=None):
+    if len(image_numpy.shape) == 2:
+        image_pil = Image.fromarray(image_numpy)
+        image_pil.save(image_path)
+    else:
+        assert orig_affine is not None, "Need affine to save nifti data."
+        image_path = image_path.replace(".png", ".nii.gz")
+        nib.Nifti1Image(image_numpy.squeeze(), affine=orig_affine).to_filename(image_path)
 
 def info(object, spacing=10, collapse=1):
     """Print methods and doc strings.

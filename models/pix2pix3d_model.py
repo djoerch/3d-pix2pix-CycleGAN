@@ -60,7 +60,7 @@ class Pix2Pix3dModel(BaseModel):
         input_B = input['B' if AtoB else 'A']
         self.input_A.resize_(input_A.size()).copy_(input_A)
         self.input_B.resize_(input_B.size()).copy_(input_B)
-        #self.image_paths = input['A_paths' if AtoB else 'B_paths']
+        self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
         self.real_A = Variable(self.input_A)
@@ -75,8 +75,7 @@ class Pix2Pix3dModel(BaseModel):
 
     # get image paths
     def get_image_paths(self):
-        return "blksdf"
-        #return self.image_paths
+        return self.image_paths
 
     def backward_D(self):
         # Fake
@@ -120,10 +119,10 @@ class Pix2Pix3dModel(BaseModel):
         self.optimizer_G.step()
 
     def get_current_errors(self):
-        return OrderedDict([('G_GAN', self.loss_G_GAN.data[0]),
-                            ('G_L1', self.loss_G_L1.data[0]),
-                            ('D_real', self.loss_D_real.data[0]),
-                            ('D_fake', self.loss_D_fake.data[0])
+        return OrderedDict([('G_GAN', self.loss_G_GAN.data.item()),
+                            ('G_L1', self.loss_G_L1.data.item()),
+                            ('D_real', self.loss_D_real.data.item()),
+                            ('D_fake', self.loss_D_fake.data.item())
                             ])
 
     def get_current_visuals(self):
