@@ -21,8 +21,8 @@ def get_ranges_from_shape(input_shape, target_shape):
     ), f"Target shape larger than given input shape ({input_shape})."
 
     output_shape = [
-        (sz_in - diff//2, sz_in - diff//2 + sz_out)
-        for sz_in, diff, sz_out in zip(input_shape, diffs, target_shape)
+        (diff//2, diff//2 + sz_out)
+        for diff, sz_out in zip(diffs, target_shape)
     ]
     return output_shape
 
@@ -64,21 +64,23 @@ class NiftiDataset(BaseDataset):
         sample = self.ds[index]
 
         r_x, r_y, r_z = get_ranges_from_shape(
-            input_shape=sample[DataKeys.DATA_KEY_GT_STACK].shape,
+            input_shape=sample[DataKeys.DATA_KEY_GT_STACK].shape[1:],
             target_shape=Settings.SHAPE,
         )
 
-        return {
-            'A': sample[DataKeys.DATA_KEY_GT_STACK][
+        return dict(
+            A=sample[DataKeys.DATA_KEY_GT_STACK][
                  :, r_x[0]:r_x[1], r_y[0]:r_y[1], r_z[0]:r_z[1]
              ] / Settings.FACTOR,
-            'B': sample[DataKeys.DATA_KEY_LR_STACK][
+            B=sample[DataKeys.DATA_KEY_LR_STACK][
                  :, r_x[0]:r_x[1], r_y[0]:r_y[1], r_z[0]:r_z[1]
              ] / Settings.FACTOR,
-            'A_paths': self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
-            'B_paths': self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
-            'affine': sample['nifti'].affine,
-        }
+            A_paths=self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
+            B_paths=self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
+            affine=sample['nifti'].slicer[
+                r_x[0]:r_x[1], r_y[0]:r_y[1], r_z[0]:r_z[1]
+            ].affine,
+        )
 
     def __len__(self):
         return len(self.ds)
