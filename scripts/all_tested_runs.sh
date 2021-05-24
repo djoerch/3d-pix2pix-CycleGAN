@@ -62,5 +62,5 @@ exp_train_args+=(--no_lsgan)
 exp_train_args+=(--niter 200)
 exp_train_args+=(--niter_decay 200)
 
-"${cmd_train} ${common_args[*]} ${common_train_args[*]} ${exp_args[*]} ${exp_train_args[*]}"
-"${cmd_test} ${common_args[*]} ${common_test_args[*]} ${exp_args[*]}"
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
