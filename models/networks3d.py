@@ -30,7 +30,12 @@ def get_norm_layer(norm_type='instance'):
     return norm_layer
 
 
-def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, gpu_ids=[]):
+ACTIVATIONS = dict(
+    tanh=nn.Tanh, sigmoid=nn.Sigmoid, relu=nn.ReLU,
+)
+
+
+def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, gpu_ids=[], output_activation='tanh'):
     netG = None
     use_gpu = len(gpu_ids) > 0
     norm_layer = get_norm_layer(norm_type=norm)
@@ -43,11 +48,11 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
     elif which_model_netG == 'resnet_6blocks':
         netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, gpu_ids=gpu_ids)
     elif which_model_netG == 'unet_96':
-        netG = UnetGenerator(input_nc, output_nc, 4, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
+        netG = UnetGenerator(input_nc, output_nc, 4, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids, output_activation=output_activation)
     elif which_model_netG == 'unet_128':
-        netG = UnetGenerator(input_nc, output_nc, 5, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
+        netG = UnetGenerator(input_nc, output_nc, 5, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids, output_activation=output_activation)
     elif which_model_netG == 'unet_256':
-        netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
+        netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids, output_activation=output_activation)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
     if len(gpu_ids) > 0:
@@ -137,7 +142,8 @@ class GANLoss(nn.Module):
 # at the bottleneck
 class UnetGenerator(nn.Module):
     def __init__(self, input_nc, output_nc, num_downs, ngf=64,
-                 norm_layer=nn.BatchNorm3d, use_dropout=False, gpu_ids=[]):
+                 norm_layer=nn.BatchNorm3d, use_dropout=False, gpu_ids=[],
+                 output_activation='tanh'):
         super(UnetGenerator, self).__init__()
         self.gpu_ids = gpu_ids
 
@@ -151,7 +157,7 @@ class UnetGenerator(nn.Module):
         unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, unet_block, norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, unet_block, norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(output_nc, ngf, unet_block, outermost=True, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(output_nc, ngf, unet_block, outermost=True, norm_layer=norm_layer, output_activation=output_activation)
 
         self.model = unet_block
 
@@ -164,38 +170,39 @@ class UnetGenerator(nn.Module):
 #############################
 #
 # 3D version of UnetGenerator
-class UnetGenerator3d(nn.Module):
-    def __init__(self, input_nc, output_nc, num_downs, ngf=64,
-                 norm_layer=nn.BatchNorm3d, use_dropout=False, gpu_ids=[]): # TODO
-        super(UnetGenerator3d, self).__init__()
-        self.gpu_ids = gpu_ids
-
-        # currently support only input_nc == output_nc
-        assert(input_nc == output_nc)
-
-        # construct unet structure
-        unet_block = UnetSkipConnectionBlock3d(ngf * 8, ngf * 8, norm_layer=norm_layer, innermost=True) 
-        for i in range(num_downs - 5):
-            unet_block = UnetSkipConnectionBlock3d(ngf * 8, ngf * 8, unet_block, norm_layer=norm_layer, use_dropout=use_dropout) 
-        unet_block = UnetSkipConnectionBlock3d(ngf * 4, ngf * 8, unet_block, norm_layer=norm_layer) 
-        unet_block = UnetSkipConnectionBlock3d(ngf * 2, ngf * 4, unet_block, norm_layer=norm_layer) 
-        unet_block = UnetSkipConnectionBlock3d(ngf, ngf * 2, unet_block, norm_layer=norm_layer) 
-        unet_block = UnetSkipConnectionBlock3d(output_nc, ngf, unet_block, outermost=True, norm_layer=norm_layer)
-
-        self.model = unet_block
-
-    def forward(self, input):
-        if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
-            return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
-        else:
-            return self.model(input)
+# class UnetGenerator3d(nn.Module):
+#     def __init__(self, input_nc, output_nc, num_downs, ngf=64,
+#                  norm_layer=nn.BatchNorm3d, use_dropout=False, gpu_ids=[]): # TODO
+#         super(UnetGenerator3d, self).__init__()
+#         self.gpu_ids = gpu_ids
+#
+#         # currently support only input_nc == output_nc
+#         assert(input_nc == output_nc)
+#
+#         # construct unet structure
+#         unet_block = UnetSkipConnectionBlock3d(ngf * 8, ngf * 8, norm_layer=norm_layer, innermost=True)
+#         for i in range(num_downs - 5):
+#             unet_block = UnetSkipConnectionBlock3d(ngf * 8, ngf * 8, unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
+#         unet_block = UnetSkipConnectionBlock3d(ngf * 4, ngf * 8, unet_block, norm_layer=norm_layer)
+#         unet_block = UnetSkipConnectionBlock3d(ngf * 2, ngf * 4, unet_block, norm_layer=norm_layer)
+#         unet_block = UnetSkipConnectionBlock3d(ngf, ngf * 2, unet_block, norm_layer=norm_layer)
+#         unet_block = UnetSkipConnectionBlock3d(output_nc, ngf, unet_block, outermost=True, norm_layer=norm_layer)
+#
+#         self.model = unet_block
+#
+#     def forward(self, input):
+#         if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
+#             return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
+#         else:
+#             return self.model(input)
 
 # Defines the submodule with skip connection.
 # X -------------------identity---------------------- X
 #   |-- downsampling -- |submodule| -- upsampling --|
 class UnetSkipConnectionBlock(nn.Module):
     def __init__(self, outer_nc, inner_nc,
-                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm3d, use_dropout=False):
+                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm3d, use_dropout=False,
+                 output_activation='tanh'):
         super(UnetSkipConnectionBlock, self).__init__()
         self.outermost = outermost
         if type(norm_layer) == functools.partial:
@@ -215,7 +222,7 @@ class UnetSkipConnectionBlock(nn.Module):
                                         kernel_size=4, stride=2,
                                         padding=1)
             down = [downconv]
-            up = [uprelu, upconv, nn.Sigmoid()]  # .Tanh()]  # output should be in (0,1)
+            up = [uprelu, upconv, ACTIVATIONS[output_activation]()]
             model = down + [submodule] + up
         elif innermost:
             upconv = nn.ConvTranspose3d(inner_nc, outer_nc,
