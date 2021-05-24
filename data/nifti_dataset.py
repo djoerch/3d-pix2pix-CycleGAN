@@ -26,6 +26,8 @@ class Settings:
     target_spacing = (0.8, 0.5, 0.5)
     rescaling_strategy = "STD_UINT16"
 
+    FACTOR = 1000
+
 
 class NiftiDataset(BaseDataset):
     def initialize(self, opt):
@@ -116,8 +118,8 @@ class NiftiDataset(BaseDataset):
 #        print(sample[DataKeys.DATA_KEY_LR_STACK].shape)
 
         return {
-            'A': sample[DataKeys.DATA_KEY_GT_STACK][:, :128, :256, :256],
-            'B': sample[DataKeys.DATA_KEY_LR_STACK][:, :128, :256, :256],
+            'A': sample[DataKeys.DATA_KEY_GT_STACK][:, :128, :256, :256] / Settings.FACTOR,
+            'B': sample[DataKeys.DATA_KEY_LR_STACK][:, :128, :256, :256] / Settings.FACTOR,
             'A_paths': self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
             'B_paths': self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
             'affine': sample['nifti'].affine,

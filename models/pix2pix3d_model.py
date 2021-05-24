@@ -121,8 +121,10 @@ class Pix2Pix3dModel(BaseModel):
     def get_current_errors(self):
         return OrderedDict([('G_GAN', self.loss_G_GAN.data.item()),
                             ('G_L1', self.loss_G_L1.data.item()),
+                            ('G_loss', self.loss_G.data.item()),
                             ('D_real', self.loss_D_real.data.item()),
-                            ('D_fake', self.loss_D_fake.data.item())
+                            ('D_fake', self.loss_D_fake.data.item()),
+                            ('D_loss', self.loss_D.data.item()),
                             ])
 
     def get_current_visuals(self):

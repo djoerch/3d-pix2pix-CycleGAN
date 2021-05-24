@@ -6,6 +6,8 @@ from . import util
 from . import html
 from .animator3d import MedicalImageAnimator
 
+from data.nifti_dataset import Settings
+
 class Visualizer():
     def __init__(self, opt):
         # self.opt = opt
@@ -138,7 +140,11 @@ class Visualizer():
         for label, image_numpy in visuals.items():
             image_name = '%s_%s.png' % (name, label)
             save_path = os.path.join(image_dir, image_name)
-            util.save_image(image_numpy, save_path, orig_affine=orig_affine)
+            util.save_image(
+                image_numpy * Settings.FACTOR,
+                save_path,
+                orig_affine=orig_affine,
+            )
 
             ims.append(image_name)
             txts.append(label)
