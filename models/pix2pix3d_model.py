@@ -24,7 +24,8 @@ class Pix2Pix3dModel(BaseModel):
 
         # load/define networks
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf,
-                                      opt.which_model_netG, opt.norm, not opt.no_dropout, self.gpu_ids)
+                                      opt.which_model_netG, opt.norm, not opt.no_dropout, self.gpu_ids,
+                                      output_activation=opt.output_activation_G,)
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
             self.netD = networks.define_D(opt.input_nc + opt.output_nc, opt.ndf,
@@ -131,7 +132,15 @@ class Pix2Pix3dModel(BaseModel):
         real_A = util.tensor2im3d(self.real_A.data)
         fake_B = util.tensor2im3d(self.fake_B.data)
         real_B = util.tensor2im3d(self.real_B.data)
-        return OrderedDict([('real_A', real_A), ('fake_B', fake_B), ('real_B', real_B)])
+
+        AtoB = self.opt.which_direction == 'AtoB'
+        label_real_A = 'real_A' if AtoB else 'real_B'
+        label_real_B = 'real_B' if AtoB else 'real_A'
+        label_fake_B = 'fake_B' if AtoB else 'fake_A'
+
+        return OrderedDict([
+            (label_real_A, real_A), (label_fake_B, fake_B), (label_real_B, real_B)
+        ])
 
     def save(self, label):
         self.save_network(self.netG, 'G', label, self.gpu_ids)

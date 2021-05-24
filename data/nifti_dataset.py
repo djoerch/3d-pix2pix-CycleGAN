@@ -1,15 +1,7 @@
 import os.path
-import random
-import torchvision.transforms as transforms
-import torch
-from data.base_dataset import BaseDataset
-#from data.image_folder import make_dataset
-import pickle
-import numpy as np
-from glob import glob
-import nibabel as nib
-import nibabel.processing
 
+from data.base_dataset import BaseDataset
+from glob import glob
 
 from monai.data import CacheDataset
 from monai.transforms import CopyItemsd
@@ -17,6 +9,22 @@ from monai.transforms import CopyItemsd
 from episurfsr.data.transforms.factories import make_transform
 from episurfsr.config.experiment_configuration import ExperimentType
 from episurfsr.data.transforms.data_keys import DataKeys
+
+
+def get_ranges_from_shape(input_shape, target_shape):
+    """Return voxel range per dimension for target shape centered within input_shape."""
+
+    diffs = [sz_in - sz_out for sz_in, sz_out in zip(input_shape, target_shape)]
+
+    assert all(
+        [diff > 0 for diff in diffs]
+    ), f"Target shape larger than given input shape ({input_shape})."
+
+    output_shape = [
+        (sz_in - diff//2, sz_in - diff//2 + sz_out)
+        for sz_in, diff, sz_out in zip(input_shape, diffs, target_shape)
+    ]
+    return output_shape
 
 
 class Settings:
@@ -27,23 +35,13 @@ class Settings:
     rescaling_strategy = "STD_UINT16"
 
     FACTOR = 1000
+    SHAPE = (128, 256, 256)
 
 
 class NiftiDataset(BaseDataset):
     def initialize(self, opt):
-
-        # set parameters for image samples (i.e. whole images)
-#        self.shape = (128, 256, 256)
-#        self.spacing = (1, 0.5, 0.5)
-#        self.params = dict(order=3, mode="constant", cval=0)
-
         self.opt = opt
         self.root = opt.dataroot
-
-#        self.paths_A = sorted(glob(os.path.join(self.root, "trainA", "*.nii.gz")))
-#        self.paths_B = sorted(glob(os.path.join(self.root, "trainB", "*.nii.gz")))
-
-#        assert len(self.paths_A) == len(self.paths_B), "Inconsistent number of images."
 
         transforms = make_transform(Settings())
         transforms.transforms = transforms.transforms[:-1]  # remove `SelectItemsd` to retrieve affine later.
@@ -61,72 +59,28 @@ class NiftiDataset(BaseDataset):
         )
 
     def __getitem__(self, index):
-        #returns samples of dimension [channels, z, x, y]
-
-#        path_A = self.paths_A[index]
-#        path_B = self.paths_B[index]
-
-#        img_A = nib.load(path_A)
-#        img_B = nib.load(path_B)
-
-        # resampling to common voxel space
-        # NOTE: assuming 'trainB' is lowres, 'trainA' is highres.
-#        img_A = nib.processing.resample_to_output(
-#            in_img=img_A,
-            # NOTE: `to_vox_map` can be NiftiImage or sequence `(shape, affine)`.
-#            voxel_sizes=self.spacing,
-#            **self.params,
-#        )
-#        img_A = nib.processing.resample_from_to(
-#            from_img=img_A,
-#            # NOTE: `to_vox_map` can be NiftiImage or sequence `(shape, affine)`.
-#            to_vox_map=(self.shape, img_A.affine),
-#            **self.params,
-#        )
-#        img_B = nib.processing.resample_from_to(
-#            from_img=img_B,
-#            # NOTE: `to_vox_map` can be NiftiImage or sequence `(shape, affine)`.
-#            to_vox_map=img_A,
-#            **self.params,
-#        )
-#
-#        # get data array from nifti image
-#        data_A = img_A.get_fdata()[None, :, :, :]
-#        data_B = img_B.get_fdata()[None, :, :, :]
-#
-#        # rescale image data to range (0, 1), where (p90->1)
-#        data_A = (data_A - data_A.min())
-#        data_A /= np.percentile(data_A, 90)
-#        data_B = (data_B - data_B.min())
-#        data_B /= np.percentile(data_B, 90)  # NOTE: need percentile of the 'positive' array to avoid division by 0.
-#
-#        # make torch tensor
-#        data_A = torch.from_numpy(data_A)
-#        data_B = torch.from_numpy(data_B)
-
-#        return {
-#            'A': data_A,
-#            'B': data_B,
-#            'affine': img_A.affine,
-#            'A_paths': path_A,
-#            'B_paths': path_B,
-#        }
+        """returns samples of dimension [channels, z, x, y]"""
 
         sample = self.ds[index]
 
-#        print(sample[DataKeys.DATA_KEY_GT_STACK].shape)
-#        print(sample[DataKeys.DATA_KEY_LR_STACK].shape)
+        r_x, r_y, r_z = get_ranges_from_shape(
+            input_shape=sample[DataKeys.DATA_KEY_GT_STACK].shape,
+            target_shape=Settings.SHAPE,
+        )
 
         return {
-            'A': sample[DataKeys.DATA_KEY_GT_STACK][:, :128, :256, :256] / Settings.FACTOR,
-            'B': sample[DataKeys.DATA_KEY_LR_STACK][:, :128, :256, :256] / Settings.FACTOR,
+            'A': sample[DataKeys.DATA_KEY_GT_STACK][
+                 :, r_x[0]:r_x[1], r_y[0]:r_y[1], r_z[0]:r_z[1]
+             ] / Settings.FACTOR,
+            'B': sample[DataKeys.DATA_KEY_LR_STACK][
+                 :, r_x[0]:r_x[1], r_y[0]:r_y[1], r_z[0]:r_z[1]
+             ] / Settings.FACTOR,
             'A_paths': self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
             'B_paths': self.ds.data[index][DataKeys.DATA_KEY_SUBJECT_PATH],
             'affine': sample['nifti'].affine,
         }
 
     def __len__(self):
-#        return len(self.paths_A)
         return len(self.ds)
 
     def name(self):
