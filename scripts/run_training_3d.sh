@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-PATH_TO_DATA_ROOT="/home/daniel/novamia/mv_3d_cycle_gan/train"
-EXPERIMENT="mv_hs_lc_3d_cycle_gan_2"
+PATH_TO_DATA_ROOT="/home/daniel/novamia/mv_3d_cycle_gan_new/train"
+EXPERIMENT="mv_hs_lc_3d_cycle_gan_4_test"
 
 
 cmd="python train.py"

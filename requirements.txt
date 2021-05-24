@@ -4,3 +4,4 @@ dominate>=2.4.0
 visdom>=0.1.8.8
 matplotlib
 nibabel
+git+ssh://git@github.com/Fred-C-Wang/Episurf_SurperRes.git
