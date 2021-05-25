@@ -21,11 +21,9 @@ cmd_train="python train.py"
 cmd_test="python test.py"
 
 common_args=()
-common_args+=(--pool_size "4")
 common_args+=(--input_nc "1")
 common_args+=(--output_nc "1")
 common_args+=(--display_port "8078")
-common_args+=(--print_freq "1")
 common_args+=(--gpu_ids "0,1")
 common_args+=(--batchSize "2")
 common_args+=(--checkpoints_dir "${PATH_TO_CHECKPOINTS_ROOT}")
@@ -34,6 +32,8 @@ common_args+=(--dataset_mode "nifti")
 
 common_train_args=()
 common_train_args+=(--dataroot "${PATH_TO_DATAROOT}/train")
+common_train_args+=(--pool_size "4")
+common_train_args+=(--print_freq "1")
 
 common_test_args=()
 common_test_args+=(--dataroot "${PATH_TO_DATAROOT}/test")
@@ -59,8 +59,191 @@ exp_args+=(--which_direction "BtoA")
 
 exp_train_args=()
 exp_train_args+=(--no_lsgan)
-exp_train_args+=(--niter 200)
-exp_train_args+=(--niter_decay 200)
+exp_train_args+=(--niter "200")
+exp_train_args+=(--niter_decay "200")
+
+#${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+#${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 2. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_unet128_LCtoHS_relu_nolsgan_niter_disc")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_128")
+exp_args+=(--output_activation_G "relu")
+exp_args+=(--which_direction "BtoA")
+
+exp_train_args=()
+exp_train_args+=(--no_lsgan)
+exp_train_args+=(--niter "300")
+exp_train_args+=(--niter_decay "700")
+exp_train_args+=(--which_model_netD "n_layers")
+exp_train_args+=(--n_layers_D "5")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 3. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_unet128_HStoLC_relu_nolsgan_niter")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_128")
+exp_args+=(--output_activation_G "relu")
+exp_args+=(--which_direction "AtoB")
+
+exp_train_args=()
+exp_train_args+=(--no_lsgan)
+exp_train_args+=(--niter "300")
+exp_train_args+=(--niter_decay "700")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 4. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_96")
+exp_args+=(--output_activation_G "")
+exp_args+=(--which_direction "AtoB")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 5. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_3_sigmoid")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_96")
+exp_args+=(--output_activation_G "sigmoid")
+exp_args+=(--which_direction "AtoB")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 6. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_l15")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_96")
+exp_args+=(--output_activation_G "tanh")
+exp_args+=(--which_direction "AtoB")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+exp_train_args+=(--lambda_A "15")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 7. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_l5")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_96")
+exp_args+=(--output_activation_G "tanh")
+exp_args+=(--which_direction "AtoB")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+exp_train_args+=(--lambda_A "5")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 8. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_unet128")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_128")
+exp_args+=(--output_activation_G ""tanh)
+exp_args+=(--which_direction "AtoB")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 9. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_unet128_HStoLC_relu_nolsgan_niter")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_128")
+exp_args+=(--output_activation_G "relu")
+exp_args+=(--which_direction "AtoB")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 10. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_unet128_LCtoHS")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_128")
+exp_args+=(--output_activation_G "tanh")
+exp_args+=(--which_direction "BtoA")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 11. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_unet128_LCtoHS_relu")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_128")
+exp_args+=(--output_activation_G "relu")
+exp_args+=(--which_direction "BtoA")
+
+exp_train_args=()
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
+
+${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
+${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
+
+
+# 12. ...
+exp_args=()
+exp_args+=(--name "mv_hs_lc_3d_cycle_gan_4_test_4_unet128_LCtoHS_relu_nolsgan")
+exp_args+=(--model "pix2pix3d")
+exp_args+=(--which_model_netG "unet_128")
+exp_args+=(--output_activation_G "relu")
+exp_args+=(--which_direction "BtoA")
+
+exp_train_args=()
+exp_train_args+=(--no_lsgan)
+exp_train_args+=(--niter "100")
+exp_train_args+=(--niter_decay "100")
 
 ${cmd_train} ${common_args[@]} ${common_train_args[@]} ${exp_args[@]} ${exp_train_args[@]}
 ${cmd_test} ${common_args[@]} ${common_test_args[@]} ${exp_args[@]}
